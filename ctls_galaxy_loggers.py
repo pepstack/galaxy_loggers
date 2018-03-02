@@ -11,7 +11,7 @@
 #
 # LOGS:
 #   -- 2017-12-08: first created
-#   -- 2017-12-12: last updated
+#   -- 2018-03-02: last updated and released
 ########################################################################
 import os, sys, signal, shutil, inspect, commands
 import importlib
@@ -27,8 +27,8 @@ from Queue import Empty, Full
 APPFILE = os.path.realpath(sys.argv[0])
 APPHOME = os.path.dirname(APPFILE)
 APPNAME,_ = os.path.splitext(os.path.basename(APPFILE))
-APPVER = "1.0.0"
-APPHELP = "Control Script for producing a mass of test files."
+APPVER = "2.0.0"
+APPHELP = "Control Script for producing a mass of test csv files."
 
 ########################################################################
 # import your local modules
@@ -36,11 +36,13 @@ import utils.utility as util
 import utils.evntlog as elog
 
 ########################################################################
-# global variables
-# 最大 loggers 支持，根据系统和需求设置 loggers 进程数
+# 用户可以根据系统和需求设置 loggers 进程数: LOGGER_WORKERS_MAX
+# 最大 loggers 支持, 可以更改
 #
 LOGGER_WORKERS_MAX = 200
 
+
+########################################################################
 exit_event, exit_queue = (threading.Event(), Queue(LOGGER_WORKERS_MAX))
 
 # 子进程结束时, 父进程会收到这个信号。
@@ -140,6 +142,7 @@ def run_forever(processes, exit_event):
         pass
 
 
+########################################################################
 # start worker loggers
 #
 def startup(loggers, config):
@@ -191,6 +194,130 @@ def reset_logger_position(loggers, workersDir, start_time, start_rowid):
 
 
 ########################################################################
+def add_logger(config, found_workers):
+    import yaml
+    from copy import deepcopy
+
+    NN = len(found_workers)
+
+    if NN > LOGGER_WORKERS_MAX:
+        elog.warn("too many loggers(>%d) to add", LOGGER_WORKERS_MAX)
+        return
+
+    loggerPrefix = found_workers[0].split('-')[0]
+
+    newLoggerName = "%s-%d" % (loggerPrefix, NN)
+    while newLoggerName in found_workers:
+        NN = NN + 1
+        newLoggerName = "%s-%d" % (loggerPrefix, NN)
+
+    # add loggerNN:
+    logger0 = os.path.join(config['loggers_abspath'], "%s.py" % loggerPrefix)
+    loggerNN = os.path.join(config['loggers_abspath'], "%s.py" % newLoggerName)
+
+    elog.info("%s: %s", newLoggerName, loggerNN)
+
+    (fr, fd) = (None, None)
+    try:
+        loggingConfigYaml = config['logger']['logging_config']
+        loggingConfigYamlDefault = "%s.0" % loggingConfigYaml
+
+        shutil.copy(loggingConfigYaml, loggingConfigYamlDefault)
+
+        fr = open(loggingConfigYaml)
+        cfg = yaml.load(fr)
+        fr.close()
+        fr = None
+
+        fd = util.open_file(loggingConfigYaml)
+
+        cfg['loggers'][newLoggerName] = deepcopy(cfg['loggers'][loggerPrefix])
+
+        yaml.dump(cfg, fd, default_flow_style=False)
+
+        fd.close()
+        fd = None
+
+        shutil.copy(logger0, loggerNN)
+
+        shutil.copy(loggingConfigYaml, loggingConfigYamlDefault)
+        elog.info("success: %s", newLoggerName)
+    except:
+        shutil.copy(loggingConfigYamlDefault, loggingConfigYaml)
+        elog.error("failed: %s", newLoggerName)
+        pass
+    finally:
+        if fr:
+            fr.close()
+        if fd:
+            fd.close()
+    pass
+
+
+########################################################################
+def remove_logger(config, found_workers):
+    import yaml
+    NN = len(found_workers) - 1
+
+    if NN == 0:
+        elog.warn("no logger can be removed")
+        return
+
+    loggerPrefix = found_workers[0].split('-')[0]
+
+    delLoggerName = "%s-%d" % (loggerPrefix, NN)
+
+    while delLoggerName not in found_workers and NN < LOGGER_WORKERS_MAX:
+        NN = NN + 1
+        delLoggerName = "%s-%d" % (loggerPrefix, NN)
+
+    if delLoggerName not in found_workers:
+        elog.warn("no logger can be removed")
+        return
+
+    # remove file loggerNN:
+    loggerNN = os.path.join(config['loggers_abspath'], "%s.py" % delLoggerName)
+    loggerNNPosition = os.path.join(config['loggers_abspath'], ".%s.position" % delLoggerName)
+
+    elog.info("%s: %s", delLoggerName, loggerNN)
+
+    (fr, fd) = (None, None)
+    try:
+        loggingConfigYaml = config['logger']['logging_config']
+        loggingConfigYamlDefault = "%s.0" % loggingConfigYaml
+
+        shutil.copy(loggingConfigYaml, loggingConfigYamlDefault)
+
+        fr = open(loggingConfigYaml)
+        cfg = yaml.load(fr)
+        fr.close()
+        fr = None
+
+        del cfg['loggers'][delLoggerName]
+
+        fd = util.open_file(loggingConfigYaml)
+        yaml.dump(cfg, fd, default_flow_style=False)
+        fd.close()
+        fd = None
+
+        os.remove(loggerNN)
+        os.remove(loggerNNPosition)
+
+        shutil.copy(loggingConfigYaml, loggingConfigYamlDefault)
+        elog.info("success: %s", delLoggerName)
+    except:
+        shutil.copy(loggingConfigYamlDefault, loggingConfigYaml)
+        elog.error("failed: %s", delLoggerName)
+        pass
+    finally:
+        if fr:
+            fr.close()
+        if fd:
+            fd.close()
+    pass
+
+
+########################################################################
 # main function
 #
 def main(config, parser):
@@ -201,11 +328,14 @@ def main(config, parser):
     logConfigDict = logger.set_logger(config['logger'], options.log_path, options.log_level)
 
     loggers = {}
+
     if config['loggers'] and len(config['loggers']):
         loggers = load_logger_workers('loggers', config['loggers'], {
                 'logger_config' : logConfigDict,
                 'logger_stash' : options.logger_stash,
-                'batch_rows' : options.batch_rows
+                'batch_rows' : options.batch_rows,
+                'end_time' : options.end_time,
+                'end_rowid' : options.end_rowid
             })
 
     if len(loggers) > LOGGER_WORKERS_MAX:
@@ -220,11 +350,21 @@ def main(config, parser):
         elog.force("total %d workers: %r", len(found_workers), found_workers)
         return
 
+    if options.add_logger:
+        add_logger(config, found_workers)
+        return
+
+    if options.remove_logger:
+        remove_logger(config, found_workers)
+        return
+
     if len(loggers) == 0 and options.force:
         loggers = load_logger_workers('loggers', found_workers, {
                 'logger_config' : logConfigDict,
                 'logger_stash' : options.logger_stash,
-                'batch_rows' : options.batch_rows
+                'batch_rows' : options.batch_rows,
+                'end_time' : options.end_time,
+                'end_rowid' : options.end_rowid
             })
 
     if options.reset_logger_position:
@@ -268,8 +408,13 @@ def main(config, parser):
 # 7) 重置所有插件的位置在默认位置
 #   $ ./ctls_galaxy_loggers.py --reset-position --force
 #
+# 8) 增加一个 loggerNN, NN 自动计算
+#   $ ./ctls_galaxy_loggers.py --add-logger
 #
-# 8) 显示帮助
+# 9) 删除最后增加的 loggerNN
+#   $ ./ctls_galaxy_loggers.py --remove-logger
+#
+# 10) 显示帮助
 #   $ ./ctls_galaxy_loggers.py --help
 #
 ########################################################################
@@ -300,6 +445,14 @@ if __name__ == "__main__":
         action="store_true", dest="list_logger_workers", default=False,
         help="list all logger workers")
 
+    group.add_option("--add-logger",
+        action="store_true", dest="add_logger", default=False,
+        help="add a new logger")
+
+    group.add_option("--remove-logger",
+        action="store_true", dest="remove_logger", default=False,
+        help="remove the last added logger")
+
     group.add_option("--reset-position",
         action="store_true", dest="reset_logger_position", default=False,
         help="reset given worker's position")
@@ -312,6 +465,16 @@ if __name__ == "__main__":
     group.add_option("--start-rowid",
         action="store", dest="start_rowid", type=int, default=1,
         help="reset given worker's start rowid. 1 default",
+        metavar="ROWID")
+
+    group.add_option("--end-time",
+        action="store", dest="end_time", type="string", default=None,
+        help="specify the end time to stop workers. None (default)",
+        metavar="DATETIME")
+
+    group.add_option("--end-rowid",
+        action="store", dest="end_rowid", type=int, default=None,
+        help="specify the end rowid to stop workers. None (default)",
         metavar="ROWID")
 
     group.add_option("--startup",

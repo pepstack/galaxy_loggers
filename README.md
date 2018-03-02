@@ -5,31 +5,20 @@ A set of python scripts for producing a mass of test files (.csv).
 
 ## How to add a logger worker
 
- - Copy a logger from existing one (NN is a number)
-
 ```
-    $ cd ${galaxy_loggers}/loggers/
-    $ cp weblogger.py webloggerNN.py
+    $ ${galaxy_loggers}/ctls_galaxy_loggers.py --add-logger
 ```
 
- - Add a logger handler under loggers section in logger.config
+## How to remove a logger worker
 
 ```
-    $ cd ${galaxy_loggers}/conf/
-    $ vi logger.config
+    $ ${galaxy_loggers}/ctls_galaxy_loggers.py --remove-logger
+```
 
-...
+## How to list all logger workers
 
-loggers:
-    ...
-
-    webloggerNN:
-        level: NOTSET
-        handlers: [weblogger_handler]
-        propagate: no
-
-...
-
+```
+    $ ${galaxy_loggers}/ctls_galaxy_loggers.py --list
 ```
 
 ## How to change the config for max size in bytes of each log file
