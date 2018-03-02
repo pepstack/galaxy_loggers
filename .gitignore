@@ -99,3 +99,10 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# galaxy_loggers project specific:
+applog/ctls_galaxy_loggers.*
+tmp/
+loggers/*.position
+*.csv
+*.lock
