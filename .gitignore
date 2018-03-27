@@ -104,5 +104,4 @@ ENV/
 applog/ctls_galaxy_loggers.*
 tmp/
 loggers/*.position
-*.csv
 *.lock
