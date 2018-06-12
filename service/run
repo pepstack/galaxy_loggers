@@ -1,0 +1,11 @@
+#!/bin/sh
+# service/run : 755
+# service/ : 1755
+###################################
+_file=$(readlink -f $0)
+_cdir=$(dirname $_file)
+_name=$(basename $_file)
+
+JARDIR=$(dirname $_cdir)/bin
+
+# exec java -jar $JARDIR/demo.jar

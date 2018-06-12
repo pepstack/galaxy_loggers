@@ -1,16 +1,12 @@
 #!/bin/bash
 #
 # @file
-#   common.sh
 #
-# @date
-#   2014-12-18
-#   2017-12-15
-# @author
-#   master@pepstack.com
+# @author: zhangliang@ztgame
 #
-# @version
-#   0.0.2pre
+# @create: 2014-12-18
+#
+# @update: 2018-06-12 14:15:35
 #
 ########################################################################
 # Error Codes:
@@ -24,24 +20,6 @@ ERR_NOT_ROOT=100
 
 # file is already existed
 ERR_FILE_EXISTED=200
-
-# Size Bytes Codes:
-#
-SIZE_1MB=1048576
-SIZE_10MB=10485760
-SIZE_100MB=104857600
-SIZE_1GB=1073741824
-SIZE_4GB=4073741824
-SIZE_10GB=10737418240
-SIZE_100GB=107374182400
-SIZE_1TB=1099511627776
-SIZE_10TB=10995116277760
-SIZE_100TB=109951162777600
-SIZE_1PB=1125899906842624
-SIZE_10PB=11258999068426240
-SIZE_100PB=112589990684262400
-SIZE_1ZB=1152921504606846976
-
 
 #-----------------------------------------------------------------------
 # detect_color_support
@@ -313,40 +291,77 @@ function validate_ipv4() {
 }
 
 
-filesizebytes() {
-    stat -c %s $1 | tr -d '\n'
+# 字符串分割成数组
+#   strsplit "I,am,a,boy" ","
+#
+function strsplit() {
+    OLD_IFS="$IFS"
+    IFS="$2"
+    local arr=($1)
+    IFS="$OLD_IFS"
+
+    echo ${arr[*]}
 }
 
 
-get_filelist() {
-    path_prefix=$1
-    total_files_bytes=$2
-    single_file_bytes=$3
+function strarray_at() {
+    local array=$1
+    local at=$2
 
-    totalsb=0
-    filelist=""
-    for file_entry in "$path_prefix"/*.csv*
+    local i=0
+    local col=""
+    local s
+
+    for s in ${array[@]}
     do
-        filedir=$(dirname $file_entry)
-        filename=$(basename $file_entry)
-
-        ext="${filename##*.}"
-        if [ "$ext" != "lock" ]; then
-            sb=$(filesizebytes "$file_entry")
-
-            if [ "$sb" -gt "$single_file_bytes" ]; then
-                let totalsb=$totalsb+$sb
-
-                if [ "$totalsb" -lt "$total_files_bytes" ]; then
-                    if [ -z "$filelist" ]; then
-                        filelist="$filename"
-                    else
-                        filelist="$filelist","$filename"
-                    fi
-                fi
-            fi
+        if [ "$i" -eq "$at" ]; then
+            col="$s"
+            break
         fi
+        ((i++))
     done
 
-    echo "$path_prefix""{""$filelist""}"
+    echo $col
+}
+
+
+# 得到指定进程名的进程 pid 数组
+#   pids_of_proc "$procname"
+#
+function pids_of_proc() {
+    local procname="$1"
+
+    local c_pid=`ps -ef | grep $procname | grep -v ' grep ' | awk '{print $2}'`
+
+    if [ -z "$c_pid" ]; then
+        echo ""
+    else
+        local pids
+
+        OLD_IFS="$IFS"
+        IFS="\n"
+        pids=($c_pid)
+        IFS="$OLD_IFS"
+
+        echo "$c_pid"
+    fi
+}
+
+
+# 得到进程打开的文件描述符数目
+# get number of opened file descriptors for given process id (pid)
+#    openfd_of_pid "$pid"
+#
+function openfd_of_pid() {
+    local c_pid="$1"
+
+    local ret=`lsof -p $c_pid -n|awk '{print $2}'|sort|uniq -c|sort -nr|more`
+
+    if [ -z "$ret" ]; then
+        echo 0
+    else
+        local arr=$(strsplit "$ret" " ")
+        local numofd=$(strarray_at "$arr" 0)
+        echo "$numofd"
+    fi
 }
