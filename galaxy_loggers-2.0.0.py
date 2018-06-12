@@ -1,7 +1,7 @@
 #!/usr/bin/python
 #-*- coding: UTF-8 -*-
 #
-# ctls_galaxy_loggers.py
+# galaxy_loggers-2.0.0.py
 #
 #   生成测试数据文件
 #
@@ -387,35 +387,38 @@ def main(config, parser):
 ########################################################################
 # Usage:
 #  1) 启动 weblogger
-#   $ ./ctls_galaxy_loggers.py weblogger --startup
+#    $ sudo galaxy_loggers.py weblogger --startup
 #
 #  2) 启动 weblogger, weblogger2
-#   $ ./ctls_galaxy_loggers.py weblogger,weblogger2 --startup
-#   $ ./ctls_galaxy_loggers.py "weblogger, weblogger2" --startup
+#    $ galaxy_loggers.py weblogger,weblogger2 --startup
+#    $ galaxy_loggers.py "weblogger, weblogger2" --startup
 #
 # 3) 启动所有 logger workers
-#   $ ./ctls_galaxy_loggers.py --startup --force
+#    $ galaxy_loggers.py --startup --force
 #
 # 4) 显示所有 logger workers 列表
-#   $ ./ctls_galaxy_loggers.py --list
+#    $ galaxy_loggers.py --list
 #
 # 5) 重置 weblogger, weblogger2 的位置
-#   $ ./ctls_galaxy_loggers.py weblogger,weblogger2 --reset-position
+#    $ galaxy_loggers.py weblogger,weblogger2 --reset-position
 #
 # 6) 重置 weblogger 的位置在指定位置
-#   $ ./ctls_galaxy_loggers.py weblogger--reset-position --start-time="2000-01-01 00:00:00" --rowid=1000000000000
+#    $ galaxy_loggers.py weblogger--reset-position --start-time="2000-01-01 00:00:00" --rowid=1000000000000
 #
 # 7) 重置所有插件的位置在默认位置
-#   $ ./ctls_galaxy_loggers.py --reset-position --force
+#    $ galaxy_loggers.py --reset-position --force
 #
 # 8) 增加一个 loggerNN, NN 自动计算
-#   $ ./ctls_galaxy_loggers.py --add-logger
+#    $ galaxy_loggers.py --add-logger
 #
 # 9) 删除最后增加的 loggerNN
-#   $ ./ctls_galaxy_loggers.py --remove-logger
+#    $ galaxy_loggers.py --remove-logger
 #
 # 10) 显示帮助
-#   $ ./ctls_galaxy_loggers.py --help
+#    $ galaxy_loggers.py --help
+#
+# 注意:
+#   如果不是以 root 用户启动程序, 则应用程序本身的日志 (applog) 不会创建.
 #
 ########################################################################
 if __name__ == "__main__":

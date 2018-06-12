@@ -62,6 +62,16 @@ A set of python scripts for producing a mass of test files (.csv).
     $ sudo bin/ctlservice.sh start
 
 
+### 关闭全部进程 (Stop all loggers)
+
+
+	$ sudo bin/ctlservice.sh stop
+
+  or
+
+    $ sudo bin/ctlservice.sh kill
+
+
 生成的文件默认在 tmp/stash/ 下，也可以更改 (--stash=YOUR_STASH_DIR)。程序本身的日志在 applog/ 下， 如果 applog 目录不存在需要手工创建。
 
 	logger files will be generated default in: tmp/stash/
