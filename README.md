@@ -1,6 +1,16 @@
 # galaxy_loggers
 A set of python scripts for producing a mass of test files (.csv).
 
+Prerequisites:
+
+    python2 + yaml
+
+On ubuntu1804:
+
+   $ sudo apt install python-minimal
+   $ sudo apt install python-yaml
+
+
 生成海量测试日志文件的 python 脚本。
 
 ## How to add a logger worker
