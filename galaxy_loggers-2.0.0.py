@@ -403,7 +403,7 @@ def main(config, parser):
 #    $ galaxy_loggers.py weblogger,weblogger2 --reset-position
 #
 # 6) 重置 weblogger 的位置在指定位置
-#    $ galaxy_loggers.py weblogger--reset-position --start-time="2000-01-01 00:00:00" --rowid=1000000000000
+#    $ galaxy_loggers.py weblogger --reset-position --start-time="2000-01-01 00:00:00" --rowid=1000000000000
 #
 # 7) 重置所有插件的位置在默认位置
 #    $ galaxy_loggers.py --reset-position --force

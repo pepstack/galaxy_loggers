@@ -27,6 +27,7 @@ _stopwait=1s
 
 _loglevel=DEBUG
 
+_stashroot=/tmp/stash
 
 . $_cdir/common.sh
 
@@ -36,6 +37,9 @@ LANG=zh_CN.UTF-8;export LANG
 ########################################################################
 # 最多服务实例数: 1 (单例服务)
 maxservs=$_maxservs
+
+# 输出文件目录
+stashroot=$_stashroot
 
 # 关闭等待超时
 stopwait=$_stopwait
@@ -234,9 +238,9 @@ debug() {
 
     if [ "$uname" == "$rununame" ]; then
         echowarn "当前登录用户与运行用户相同, 未使用 runuser"
-        "$servmodule" --startup --force --log-level=$loglevel        
+        "$servmodule" --startup --force --stash="$stashroot" --log-level=$loglevel        
     elif [ "$uname" == "root" ]; then
-        runuser - "$rununame" -c ''"$servmodule"' --startup --force --log-level=$loglevel'
+        runuser - "$rununame" -c ''"$servmodule"' --startup --force --stash='"$stashroot"' --log-level=$loglevel'
     else
         echoerror "请用 root 用户运行 runuser !"
     fi
@@ -268,9 +272,9 @@ start() {
 
     if [ "$uname" == "$rununame" ]; then
         echowarn "当前登录用户与运行用户相同, 未使用 runuser"
-        nohup "$servmodule" --startup --force --log-level=$loglevel > /dev/null 2>&1 &
+        nohup "$servmodule" --startup --force --stash="$stashroot" --log-level=$loglevel > /dev/null 2>&1 &
     elif [ "$uname" == "root" ]; then
-        runuser - "$rununame" -c ''"$servmodule"' --startup --force --log-level=$loglevel > /dev/null 2>&1 &'
+        runuser - "$rununame" -c 'nohup '"$servmodule"' --startup --force --stash='"$stashroot"' --log-level=$loglevel > /dev/null 2>&1 &'
     else
         echoerror "请用 root 用户运行 runuser !"
     fi
