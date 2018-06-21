@@ -54,7 +54,7 @@ class GracefulExitEvent(object):
                 print "main process(%d) got GracefulExitException." % os.getpid()
             except Exception, ex:
                 self.notify_stop()
-                print "main process(%d) got unexpected Exception: %r" % (os.getpid(), ex)                
+                print "main process(%d) got unexpected Exception: %r" % (os.getpid(), ex)
                 break
         pass
 

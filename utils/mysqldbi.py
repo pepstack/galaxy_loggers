@@ -5,7 +5,7 @@
 #
 # @author: zhangliang 张亮
 # @since: 2013-11-15
-# @version: theVersion
+# @version: 2018-06-21 13:35:41
 #
 # -- Install MySQLdb for python on ubuntu:
 #   $ sudo apt-get install python-mysqldb

@@ -67,6 +67,45 @@ def string_to_datetime(dtstr = None, setdefault = '9999-12-31 23:59:59.999999'):
     return datetime.strptime(dtstr, dtfmt)
 
 
+# get filename by minutes
+#   t = "2018-12-31 23:59:59"
+#
+def name_by_split_minutes(dtstr, splitMinutes, prefixName = None, suffixName = None):
+    if splitMinutes >= 60:
+        # by hour
+        SPLIT_HOURS = (splitMinutes + 59)/60
+        dtstr = dtstr[:dtstr.find(':')]
+        d = dtstr[:dtstr.find(' ')].replace('-', '').strip()
+        h = int(dtstr[dtstr.find(' '):].strip())
+        h = (h/SPLIT_HOURS) * SPLIT_HOURS
+
+        if prefixName:
+            if suffixName:
+                return "%s%s%02d%s" % (prefixName, d, h, suffixName)
+            else:
+                return "%s%s%02d" % (prefixName, d, h)
+        else:
+            if suffixName:
+                return "%s%02d%s" % (d, h, suffixName)
+            else:
+                return "%s%02d" % (d, h)
+    else:
+        m = int(dtstr[dtstr.find(':') + 1 : dtstr.rfind(':')])
+        m = (m / splitMinutes) * splitMinutes
+        dh = dtstr[ : dtstr.find(':')].replace(' ', '').replace('-', '').strip(' ')
+
+        if prefixName:
+            if suffixName:
+                return "%s%s%02d%s" % (prefixName, dh, m, suffixName)
+            else:
+                return "%s%s%02d" % (prefixName, dh, m)
+        else:
+            if suffixName:
+                return "%s%02d%s" % (dh, m, suffixName)
+            else:
+                return "%s%02d" % (dh, m)
+
+
 #######################################################################
 
 def sig_chld(signo, frame):
@@ -268,7 +307,7 @@ def write_first_line_nothrow(fname, line):
         return ret
 
 
-def relay_read_messages(pathfile, posfile, chunk_size = 8192, read_maxsize = 65536):
+def relay_read_messages(pathfile, posfile, stopfile, chunk_size = 8192, read_maxsize = 65536):
     last_position = 0
 
     if not file_exists(posfile):
@@ -314,6 +353,10 @@ def relay_read_messages(pathfile, posfile, chunk_size = 8192, read_maxsize = 655
                 # 成功保存当前位置点
                 if position > last_position:
                     write_first_line_nothrow(posfile, str(position))
+
+            if file_exists(stopfile):
+                break
+
         return messages
     finally:
         if infd:
