@@ -1,11 +1,13 @@
 #!/usr/bin/python
 #-*- coding: UTF-8 -*-
 #
-# utility.py
+# @file: utility.py
 #   Python utility functions
 #
-# init created: 2015-12-02
-# last updated: 2017-12-23
+# @create: 2015-12-02
+#
+# @update: 2018-06-26 18:22:30
+#
 #######################################################################
 import os, errno, sys, shutil, inspect, select, commands
 import signal, threading
@@ -65,6 +67,27 @@ def string_to_datetime(dtstr = None, setdefault = '9999-12-31 23:59:59.999999'):
     else:
         dtfmt = '%Y-%m-%d %H:%M:%S.%f'
     return datetime.strptime(dtstr, dtfmt)
+
+
+# get array of paths from path string
+#  "/tmp/logstash/a.log"
+#  "/tmp/logstash/{a.log,b.log}"
+#  "/tmp/logstash/{a.log,b.log}:/tmp/logstash2/{c.log,d.log}"
+#
+def parse_pathstr(pathstr):
+    arrpaths = []
+    for pl in pathstr.split(':'):
+        s1, s2 = pl.find("{"), pl.find("}")
+        if s1 > 1 and s2 > s1 + 1:
+            path = pl[0 : s1].strip()
+
+            for sub in pl[s1 + 1 : s2].split(','):
+                relp = os.path.join(path, sub.strip().rstrip('/'))
+                arrpaths.append(os.path.realpath(relp))
+        elif s1 < 0 and s2 < 0:
+            relp = pl.strip().rstrip('/')
+            arrpaths.append(os.path.realpath(relp))
+    return arrpaths
 
 
 # get filename by minutes
@@ -307,8 +330,8 @@ def write_first_line_nothrow(fname, line):
         return ret
 
 
-def relay_read_messages(pathfile, posfile, stopfile, chunk_size = 8192, read_maxsize = 65536):
-    last_position = 0
+def relay_read_messages(pathfile, posfile, stopfile, chunk_size = 65536, read_maxsize = 16777216):
+    infd, messages, last_position = None, [], 0
 
     if not file_exists(posfile):
         os.mknod(posfile)
@@ -316,8 +339,6 @@ def relay_read_messages(pathfile, posfile, stopfile, chunk_size = 8192, read_max
 
     if file_exists(posfile):
         last_position = int(read_first_line_nothrow(posfile))
-
-    infd, messages = None, []
 
     try:
         infd = open(pathfile, 'rb')
@@ -356,11 +377,11 @@ def relay_read_messages(pathfile, posfile, stopfile, chunk_size = 8192, read_max
 
             if file_exists(stopfile):
                 break
-
-        return messages
     finally:
-        if infd:
-            infd.close()
+        close_file_nothrow(infd)
+        pass
+
+    return (messages, last_position)
 
 
 def write_file(fd, encoding, format, *arg):
