@@ -63,6 +63,11 @@ def log_messages(loggerClass):
     pass
 
 
+def log_messages2(loggerClass):
+    from phoenixdb_test import PhoenixdbTest
+    pass
+
+
 class WebLogger(object):
     LOGGER_CATALOG = logger_module_name
 
@@ -87,6 +92,8 @@ class WebLogger(object):
         filename_format = "%s_%s.csv" % (self.logger_name, time.strftime("%Y%m%d%H"))
 
         self.init_data(os.path.join(self.log_prefix, filename_format))
+
+        
         pass
 
 
