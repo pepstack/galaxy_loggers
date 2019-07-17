@@ -43,7 +43,6 @@ class PhoenixdbTest(object):
         self.autocommit = kwargs['autocommit']
 
         self.conn = phoenixdb.connect(self.dburl, autocommit = self.autocommit)
-        self.cursor = self.conn.cursor()
         pass
 
 
@@ -53,8 +52,11 @@ class PhoenixdbTest(object):
 
 
     def cleanup(self):
-        if self.cursor:
-            self.cursor.close()
         if self.conn:
             self.conn.close()
         pass
+
+
+    def getCursor(self):
+        cursor = self.conn.cursor()
+        return cursor

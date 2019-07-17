@@ -7,6 +7,7 @@ All rights reserved.
 A set of python scripts for producing a mass of test files (.csv).
 
 一个多进程框架。每个进程 (loggers/weblogger.py) 生成测试日志文件。可以修改代码，使之用于其它目的。
+生成的文件在:　tmp/stash/
 
 - 必备(Prerequisites):
 
@@ -17,10 +18,16 @@ A set of python scripts for producing a mass of test files (.csv).
         $ sudo apt install python-minimal
         $ sudo apt install python-yaml
 
+### galaxy_loggers.py 连接必须 existed:
+
+    $ cd bin/
+    $ rm -rf galaxy_loggers.py
+    $ ln -s ../galaxy_loggers-2.0.0.py galaxy_loggers.py
+
+
 ### 如何增加一个进程 (How to add a logger worker)
 
-
-	$ bin/galaxy_loggers.py --add-logger
+	$ ./galaxy_loggers.py --add-logger
 
 
 ### 如何减少一个进程 (How to remove a logger worker)
@@ -54,7 +61,6 @@ A set of python scripts for producing a mass of test files (.csv).
 
 ### 启动进程 (Start loggers)
 
-
 	$ sudo bin/ctlservice.sh debug
 
   or
@@ -81,7 +87,7 @@ A set of python scripts for producing a mass of test files (.csv).
 	see: galaxy_loggers.py: line 292 stash_dir = ...
 
     
-###
+### phoenix 表结构
 
 CREATE TABLE IF NOT EXISTS WEB_STAT (
      HOST CHAR(2) NOT NULL,
